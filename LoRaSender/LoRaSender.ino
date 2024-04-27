@@ -2,14 +2,21 @@
 #include <LoRa.h> 
 #include <string.h>
 #include <MQUnifiedsensor.h>
+#include <Wire.h>
+#include <Adafruit_BMP280.h>
+
 
 /* 
-MQ09 A1
-DHT11 A0
-LightSensor A3
+
+DHT11         A0
+MQ09          A1
+PM            A2
+LightSensor   A3
+BMP           A4 and A5
+
 WaterSensor D1
-PM A4
-BMP A4 ?? and A5
+Groove AQI Sensor NOT IN USE
+
 */
 
 // Data Variables
@@ -24,7 +31,7 @@ float pm = 0;
 float water = 0; 
 
 // PM Sensor Variable
-int measurePin = A4; //PM Sensor Pins
+int measurePin = A2; //PM Sensor Pins
 int ledPower = 2;
 int samplingTime = 280;
 int deltaTime = 40;
@@ -37,6 +44,7 @@ float dustDensity = 0;
 // MQ Setting
 MQUnifiedsensor MQ9("Arduino UNO", 5, 10, A1, "MQ-9");
 
+Adafruit_BMP280 bmp; // I2C
 
 void read_sensors(){
   // Devangs Remaining Code
@@ -59,6 +67,10 @@ void read_sensors(){
   float CH4 = MQ9.readSensor();
   MQ9.setA(599.65); MQ9.setB(-2.244); // Reading CO
   float CO = MQ9.readSensor(); 
+
+  // Reading BMP Values
+  bmp_pressure = bmp.readPressure() / 100;
+  bmp_altitude = bmp.readAltitude(1013.25);
  
   //  
   mq09_CO  = CO;
@@ -68,8 +80,6 @@ void read_sensors(){
   dht11_hum = 10.10; // Update this
   dht11_temp = 10.10; // Update this
 
-  bmp_pressure = 20.20;
-  bmp_altitude = 30.30;
   lightintensity = 40.40;
   water = 100.13;
   delay(50);
@@ -125,6 +135,15 @@ void setup() {
   }
   MQ9.setR0(calcR0/10);
 
+  // BMP280 Setup
+  unsigned status;status = bmp.begin();
+
+  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
+                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+  //
 
   while (!Serial);  
   Serial.println("Starting LoRa");
