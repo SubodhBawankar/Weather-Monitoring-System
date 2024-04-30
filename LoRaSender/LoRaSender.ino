@@ -4,6 +4,7 @@
 #include <MQUnifiedsensor.h>
 #include <Wire.h>
 #include <Adafruit_BMP280.h>
+#include <DHT.h>
 
 /* 
 DHT11         A0
@@ -26,7 +27,7 @@ float bmp_pressure = 0;
 float bmp_altitude = 0;
 // float lightintensity = 0;
 float pm = 0;
-float water = 0; 
+float WaterValue = 0; 
 
 // PM Sensor Variable
 int measurePin = A2; //PM Sensor Pins
@@ -38,12 +39,15 @@ float voMeasured = 0;
 float calcVoltage = 0;
 float dustDensity = 0;          
 //
-
+#define DHTPIN A0 
+#define DHTTYPE DHT11   // DHT 11
+#define WATER_SENSOR 1
 // MQ Setting
 MQUnifiedsensor MQ9("Arduino UNO", 5, 10, A1, "MQ-9");
 MQUnifiedsensor MQ135("Arduino UNO", 5, 10, A3, "MQ-135");
 
 Adafruit_BMP280 bmp; // I2C
+DHT dht(DHTPIN, DHTTYPE);
 
 void read_sensors(){
   // Reading PM Sensor
@@ -75,11 +79,18 @@ void read_sensors(){
   mq135_NH4 = NH4;
   pm = dustDensity;
   
-  dht11_hum = 10.10; // Update this
-  dht11_temp = 10.10; // Update this
-
+  dht11_hum = dht.readHumidity();
+  dht11_temp  = dht.readTemperature();
+  
   // lightintensity = 40.40;
-  water = 100.13;
+  //WaterSensor
+  WaterValue = digitalRead(WATER_SENSOR);
+  delay(1000);
+  if (WaterValue == 0 ) {
+    Serial.println("It is Raining!");
+  } else {
+    Serial.println("No Rain Detected.");
+    }
   delay(50);
 }
 
@@ -97,7 +108,7 @@ void LoRa_send(){
   outputString += "E ";
   outputString += String(pm, 2);
   outputString += "F ";
-  outputString += String(water, 2);
+  outputString += String(WaterValue, 2);
   outputString += "G ";
   outputString += String(dht11_temp, 2);
   outputString += "H ";
@@ -133,6 +144,9 @@ void setup() {
   }
   MQ9.setR0(calcR0/10);
 
+  // WaterSensor
+  pinMode(WATER_SENSOR, INPUT);
+
   // MQ135 Setup
   MQ135.setRegressionMethod(1);
   MQ135.init(); 
@@ -143,6 +157,8 @@ void setup() {
     calcR1 += MQ135.calibrate(3.6);
   }
   MQ135.setR0(calcR1/10);
+  //DHT11
+  dht.begin();
 
   // BMP280 Setup
   unsigned status;status = bmp.begin();
