@@ -5,28 +5,26 @@
 #include <Wire.h>
 #include <Adafruit_BMP280.h>
 
-
 /* 
-
 DHT11         A0
 MQ09          A1
 PM            A2
-LightSensor   A3
+MQ135         A3
 BMP           A4 and A5
 
 WaterSensor D1
+LightSensor MUX with DHT11
 Groove AQI Sensor NOT IN USE
-
 */
 
 // Data Variables
 float mq09_CO = 0;
-float mq09_CH4 = 0; 
+float mq135_NH4 = 0; 
 float dht11_temp = 0;
 float dht11_hum = 0;
 float bmp_pressure = 0;
 float bmp_altitude = 0;
-float lightintensity = 0;
+// float lightintensity = 0;
 float pm = 0;
 float water = 0; 
 
@@ -43,12 +41,11 @@ float dustDensity = 0;
 
 // MQ Setting
 MQUnifiedsensor MQ9("Arduino UNO", 5, 10, A1, "MQ-9");
+MQUnifiedsensor MQ135("Arduino UNO", 5, 10, A3, "MQ-135");
 
 Adafruit_BMP280 bmp; // I2C
 
 void read_sensors(){
-  // Devangs Remaining Code
-
   // Reading PM Sensor
   digitalWrite(ledPower,LOW);
   delayMicroseconds(samplingTime);
@@ -62,11 +59,12 @@ void read_sensors(){
   
   // Reading MQ09 Sensor
   MQ9.update();
-
-  MQ9.setA(4269.6); MQ9.setB(-2.648); // Reading CH4
-  float CH4 = MQ9.readSensor();
   MQ9.setA(599.65); MQ9.setB(-2.244); // Reading CO
   float CO = MQ9.readSensor(); 
+  //Reading MQ135
+  MQ135.update();
+  MQ135.setA(102.2 ); MQ135.setB(-2.473); // Configure the equation to calculate NH4 concentration value
+  float NH4 = MQ135.readSensor(); 
 
   // Reading BMP Values
   bmp_pressure = bmp.readPressure() / 100;
@@ -74,13 +72,13 @@ void read_sensors(){
  
   //  
   mq09_CO  = CO;
-  mq09_CH4 = CH4;
+  mq135_NH4 = NH4;
   pm = dustDensity;
   
   dht11_hum = 10.10; // Update this
   dht11_temp = 10.10; // Update this
 
-  lightintensity = 40.40;
+  // lightintensity = 40.40;
   water = 100.13;
   delay(50);
 }
@@ -91,22 +89,22 @@ void LoRa_send(){
   outputString += "A ";
   outputString += String(mq09_CO, 2);
   outputString += "B ";
-  outputString += String(mq09_CH4, 2);
+  outputString += String(mq135_NH4, 2);
   outputString += "C ";
   outputString += String(bmp_pressure, 2);
   outputString += "D ";
   outputString += String(bmp_altitude, 2);
   outputString += "E ";
-  outputString += String(lightintensity, 2);
-  outputString += "F ";
   outputString += String(pm, 2);
-  outputString += "G ";
+  outputString += "F ";
   outputString += String(water, 2);
-  outputString += "H ";
+  outputString += "G ";
   outputString += String(dht11_temp, 2);
-  outputString += "I ";
+  outputString += "H ";
   outputString += String(dht11_hum, 2);
-  outputString += "J ";
+  outputString += "I ";
+  // outputString += String(lightintensity, 2);
+  // outputString += "J ";
 
 
   Serial.print("Value: "); 
@@ -134,6 +132,17 @@ void setup() {
     calcR0 += MQ9.calibrate(9.6);
   }
   MQ9.setR0(calcR0/10);
+
+  // MQ135 Setup
+  MQ135.setRegressionMethod(1);
+  MQ135.init(); 
+  float calcR1 = 0;
+  for(int i = 1; i<=10; i ++)
+  {
+    MQ135.update();
+    calcR1 += MQ135.calibrate(3.6);
+  }
+  MQ135.setR0(calcR1/10);
 
   // BMP280 Setup
   unsigned status;status = bmp.begin();
