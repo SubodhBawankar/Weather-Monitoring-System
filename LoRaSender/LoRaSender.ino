@@ -23,10 +23,17 @@ float mq09_CO = 0;
 float mq135_NH4 = 0; 
 float dht11_temp = 0;
 float dht11_hum = 0;
+float t = 0;
+float heat_index = 0;
+float real_feel = 0;
 float bmp_pressure = 0;
 float bmp_altitude = 0;
 // float lightintensity = 0;
 float pm = 0;
+float aqiPM = 0;
+float aqiCO = 0;
+float aqiNH = 0;
+float aqiFinal = 0;
 float WaterValue = 0; 
 
 // PM Sensor Variable
@@ -76,12 +83,22 @@ void read_sensors(){
  
   //  
   mq09_CO  = CO;
+  aqiCO = 69;
+
   mq135_NH4 = NH4;
+  aqiNH = 69;
+
   pm = dustDensity;
+  aqiPM = 69;
+  
+  aqiFinal = 69;
   
   dht11_hum = dht.readHumidity();
-  dht11_temp  = dht.readTemperature();
-  
+  dht11_temp  = dht.readTemperature()  ;
+  t= (dht11_temp * 1.8 ) + 32;
+  heat_index =  (-42.379) + ((2.04901523) * t) + ((10.14333127) * dht11_hum) - ((0.22475541) * t * dht11_hum) - ((6.83783e-3) * t * t) - ((5.481717e-2) * dht11_hum * dht11_hum) + ((1.22874e-3) * t * t * dht11_hum) + ((8.5282e-4) * t * dht11_hum * dht11_hum) - ((1.99e-6) * t * t * dht11_hum * dht11_hum);
+  real_feel = (heat_index - 32) * 5/9 ;
+
   // lightintensity = 40.40;
   //WaterSensor
   WaterValue = digitalRead(WATER_SENSOR);
@@ -97,25 +114,33 @@ void read_sensors(){
 void LoRa_send(){
   String outputString = "";
 
-  outputString += "A ";
+  outputString += "A";
   outputString += String(mq09_CO, 2);
-  outputString += "B ";
+  outputString += "B";
   outputString += String(mq135_NH4, 2);
-  outputString += "C ";
+  outputString += "C";
   outputString += String(bmp_pressure, 2);
-  outputString += "D ";
+  outputString += "D";
   outputString += String(bmp_altitude, 2);
-  outputString += "E ";
+  outputString += "E";
   outputString += String(pm, 2);
-  outputString += "F ";
+  outputString += "F";
   outputString += String(WaterValue, 2);
-  outputString += "G ";
+  outputString += "G";
   outputString += String(dht11_temp, 2);
-  outputString += "H ";
+  outputString += "H";
   outputString += String(dht11_hum, 2);
-  outputString += "I ";
-  // outputString += String(lightintensity, 2);
-  // outputString += "J ";
+  outputString += "I";
+  outputString += String(real_feel , 2);
+  outputString += "J";
+  outputString += String(aqiPM , 2);
+  outputString += "K";
+  outputString += String(aqiCO , 2);
+  outputString += "L";
+  outputString += String(aqiNH , 2);
+  outputString += "M";
+  outputString += String(aqiFinal , 2);
+  outputString += "N";
 
 
   Serial.print("Value: "); 
@@ -184,5 +209,4 @@ void loop() {
   delay(5000);
  
 }
-
 
