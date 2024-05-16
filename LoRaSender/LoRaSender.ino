@@ -64,7 +64,7 @@ void read_sensors(){
   digitalWrite(ledPower,HIGH); 
   delayMicroseconds(sleepTime);
   calcVoltage = voMeasured * (5.0 / 1024.0);
-  dustDensity = 170 * calcVoltage - 0.1;
+  dustDensity = 170 * calcVoltage ;
   //
   
   // Reading MQ09 Sensor
@@ -102,42 +102,47 @@ void read_sensors(){
   mq135_NH4 = NH4;
   if (mq135_NH4 >= 0 && mq135_NH4 < 0.05) {
     aqiNH = (int)(mq135_NH4 / 0.05 * 50.0);
-  } else if (mq135_NH4 >= 0.05 && mq135_NH4 < 0.1) {
+  } 
+  else if (mq135_NH4 >= 0.05 && mq135_NH4 < 0.1) {
     aqiNH = (int)((mq135_NH4 - 0.05) / (0.1 - 0.05) * (100.0 - 51.0) + 51.0);
-  } else if (mq135_NH4 >= 0.1 && mq135_NH4 < 0.2) {
+  } 
+  else if (mq135_NH4 >= 0.1 && mq135_NH4 < 0.2) {
     aqiNH = (int)((mq135_NH4 - 0.1) / (0.2 - 0.1) * (150.0 - 101.0) + 101.0);
-  } else if (mq135_NH4 >= 0.2 && mq135_NH4 < 0.4) {
+  } 
+  else if (mq135_NH4 >= 0.2 && mq135_NH4 < 0.4) {
     aqiNH = (int)((mq135_NH4 - 0.2) / (0.4 - 0.2) * (200.0 - 151.0) + 151.0);
-  } else if (mq135_NH4 >= 0.4 && mq135_NH4 < 0.8) {
+  } 
+  else if (mq135_NH4 >= 0.4 && mq135_NH4 < 0.8) {
     aqiNH = (int)((mq135_NH4 - 0.4) / (0.8 - 0.4) * (300.0 - 201.0) + 201.0);
-  } else if (mq135_NH4 >= 0.8 && mq135_NH4 < 1.0) {
+  } 
+  else if (mq135_NH4 >= 0.8 && mq135_NH4 < 1.0) {
     aqiNH = (int)((mq135_NH4 - 0.8) / (1.0 - 0.8) * (400.0 - 301.0) + 301.0);
-  } else if (mq135_NH4 >= 1.0 && mq135_NH4 < 1.5) {
+  } 
+  else if (mq135_NH4 >= 1.0 && mq135_NH4 < 1.5) {
     aqiNH = (int)((mq135_NH4 - 1.0) / (1.5 - 1.0) * (500.0 - 401.0) + 401.0);
-  } else {
+  } 
+  else {
     aqiNH = 500;
   }
 
   pm = dustDensity;
-  if (pm >= 0 && pm <= 54) {
-        aqiPM = ((50.0 / 54.0) * pm);
-    } else if (pm >= 55 && pm <= 154) {
-        aqiPM = ((49.0 / 99.0) * (pm - 55.0)) + 51.0;
-    } else if (pm >= 155 && pm <= 254) {
-        aqiPM = ((49.0 / 99.0) * (pm - 155.0)) + 101.0;
-    } else if (pm >= 255 && pm <= 354) {
-        aqiPM = ((49.0 / 99.0) * (pm - 255.0)) + 151.0;
-    } else if (pm >= 355 && pm <= 424) {
-        aqiPM = ((49.0 / 69.0) * (pm - 355.0)) + 201.0;
-    } else if (pm >= 425 && pm <= 504) {
-        aqiPM = ((49.0 / 79.0) * (pm - 425.0)) + 301.0;
-    } else if (pm >= 505 && pm <= 604) {
-        aqiPM = ((49.0 / 99.0) * (pm - 505.0)) + 401.0;
-    } else {
+  if (pm >= 0 && pm <= 50) {
+        aqiPM = ((50.0 / 50.0) * pm);
+    } else if (pm >= 51 && pm <= 100) {
+        aqiPM = ((49.0 / 49.0) * (pm - 51.0)) + 51.0;
+    } else if (pm >= 101 && pm <= 250) {
+        aqiPM = ((99.0 / 149.0) * (pm - 101.0)) + 101.0;
+    } else if (pm >= 251 && pm <= 350) {
+        aqiPM = ((99.0 / 99.0) * (pm - 251.0)) + 201.0;
+    } else if (pm >= 351 && pm <= 430) {
+        aqiPM = ((99.0 / 80.0) * (pm - 351.0)) + 301.0;
+    } else if (pm >= 431 ) {
+        aqiPM = ((99.0 / 179.0) * (pm - 431.0)) + 401.0;
+    }  else {
         aqiPM = -1; // Error value indicating out of range
     }
   
-  aqiFinal = max(aqiPM, max(aqiCO, aqiNH));
+  aqiFinal = max(aqiPM, aqiCO);
   
   
   dht11_hum = dht.readHumidity();
@@ -174,7 +179,7 @@ void LoRa_send(){
   outputString += "K";
   outputString += String(aqiCO , 2);
   outputString += "L";
-  outputString += String(aqiNH , 2);
+  //outputString += String(aqiNH , 2);
   outputString += "M";
   outputString += String(aqiFinal , 2);
   outputString += "N";
